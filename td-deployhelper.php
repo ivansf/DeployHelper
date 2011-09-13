@@ -10,7 +10,10 @@ Author URI: http://www.topdraw.com
 
 class DeployHelper
 {
-	private $text_to_replace = 'http://wptest.local';
+	private $url_from = '';
+	private $url_to = '';
+	private $path_from = '';
+	private $path_to = '';
 
 	function DeployHelper()
 	{
@@ -32,17 +35,18 @@ class DeployHelper
 		?>
 		<script type="text/javascript">
 			jQuery(document).ready(function($) {
-				jQuery('#show_debug').click(function(){
+				jQuery('.show_debug').click(function(){
 					jQuery('.debug').show();
+					return false;
 				});
 			});
 		</script>
 		<div id="poststuff" class="wrap metabox-holder">
-			<h2>Deploy Helper</h2>
+			<h2><a href="#" style="float:right;">Top Draw Logo</a>Deploy Helper</h2>
 
 			<div class="postbox">
 				<form method="post" action="">
-				<h3><span>Instructions</span></h3>
+					<h3><span>Instructions</span></h3>
 
 				<div class="inside">
 					<p>
@@ -56,21 +60,27 @@ class DeployHelper
 						</tr>
 						<tr>
 							<td><label>siteurl: </label></td>
-							<td><input type="text" style="width: 100%;" value="" /></td>
-							<td><input type="text" style="width: 100%;" value="<?php echo get_option('siteurl') ?>" />
+							<td><input type="text" name="url_from" style="width: 100%;"
+									   value="<?php echo @$_POST['url_from'] ? @$_POST['url_from'] : '<replace>' ?>" /></td>
+							<td><input type="text" name="url_to" style="width: 100%;"
+									   value="<?php echo @$_POST['url_to'] ? @$_POST['url_to'] : get_option('siteurl') ?>" />
 							</td>
 						</tr>
 						<tr>
 							<td><label>Server Path: </label></td>
-							<td><input type="text" style="width: 100%;" value="/var/..." />
+							<td><input type="text" name="path_from" style="width: 100%;"
+									value="<?php echo @$_POST['path_from'] ? @$_POST['path_from'] : '/var/...' ?>"/>
 							<p class="description">Paste in the server path where the site previously was. You may have to check the options table.</p></td>
-							<td><input type="text" style="width: 100%;" value="/var/..." />
+							<td><input type="text" name="path_to" style="width: 100%;"
+									value="<?php echo @$_POST['path_to'] ? @$_POST['path_to'] : '/var/...' ?>"/>
 							<p class="description">Paste in the server path the site is currently in.</p></td>
 						</tr>
 					</table>
 					<p class="description">The test will also check for write permissions on most common paths.</p>
 
-					<p><label><input type="checkbox" name="ignore" checked="checked"> Ignore the server path.</label></p>
+
+
+					<p><label><input type="checkbox" name="ignore" value="1" <?php if (@$_POST['ignore'] == 1) echo ' checked' ?>> Include server paths.</label></p>
 					<input type="submit" name="submit" class="button button-primary" value="Run check" />
 					<input type="submit" name="submit" class="button" value="Fix" />
 				</div>
@@ -78,30 +88,53 @@ class DeployHelper
 			</div>
 
 		<?php
-		// Runing the test?
-		//print_r($_POST);
+
+		if (isset($_POST['submit'])) {
+			$this->url_from = $_POST['url_from'];
+			$this->url_to = $_POST['url_to'];
+			$this->path_from = $_POST['path_from'];
+			$this->path_to = $_POST['path_to'];
+		}
 		if (isset($_POST['submit']) && $_POST['submit'] === 'Run check') {
 			echo $this->run_check();
+			if (isset($_POST['ignore']) && ($_POST['ignore'] == 1)) {
+				echo '<hr >';
+				echo $this->run_check(true);
+			}
+		} else if (isset($_POST['submit']) && $_POST['submit'] === 'Fix') {
+			echo $this->run_fix();
+			if (isset($_POST['ignore']) && ($_POST['ignore'] == 1)) {
+				echo '<hr >';
+				echo $this->run_fix(true);
+			}
 		}
 		?>
 		</div>
 		<?php
 	}
 
+
 	/**
 	 * Runs a check to find the old server path and site url.
 	 *
 	 * @return string html output;
 	 */
-	function run_check() {
+	function run_check($path = false)
+	{
+		$from = $this->url_from;
+		$to = $this->url_to;
+		if ($path) {
+			$from = $this->path_from;
+			$to = $this->path_to;
+		}
+
 		$out = '';
-		$results = $this->_get_options_with_url();
 		$out .= '<table class="wp-list-table widefat"><tr><th>Table name
-			<a href="#" id="show_debug">Show debug</a>
+			<a href="#" class="show_debug">Show debug</a>
 			</th><th>Table name</th></tr>';
 
-		//print_r($this->_get_tables());
 		$tables = $this->_get_tables();
+
 
 		foreach($tables as $tbl) {
 			$normal = 0;
@@ -113,14 +146,14 @@ class DeployHelper
 			// looping through the fields in a table
 			foreach($fields as $field) {
 				// $field[0] contains the field name
-				$array = $this->_check_fields_in_table($table, $field[0]);
+				$array = $this->_check_fields_in_table($table, $field[0], $from);
 				foreach ($array as $found) {
 					$output .= $field[0];
-					$value = @unserialize($found[0]);
-					if ($value) { // means the data is serialized.
+					$value = maybe_unserialize($found[0]);
+					if (is_array($value)) { // means the data is serialized.
 						$serialized++;
 						$found[0] = '<div style="border: 1px solid #BBB; padding: 3px; margin: 3px; overflow: auto;
-						max-height: 80px; width: 420px;">' . $this->_paint_url($this->text_to_replace,print_r($value, true)) .  '</div>';
+						max-height: 80px; width: 420px;">' . $this->_paint_url($from,print_r($value, true)) .  '</div>';
 					} else {
 						$found[0] = '<div style="border: 1px solid #555; padding: 3px; margin: 3px; overflow: auto;
 						max-height: 80px; width: 420px">'.$found[0].'</div>';
@@ -141,33 +174,88 @@ class DeployHelper
 		return $out;
 	}
 
+
+	/**
+	 * @return HTML with results
+	 */
+	function run_fix($path = false)
+	{
+		$from = $this->url_from;
+		$to = $this->url_to;
+		if ($path) {
+			$from = $this->path_from;
+			$to = $this->path_to;
+		}
+		$out = '';
+//		$results = $this->_get_options_with_url();
+		$out .= '<table class="wp-list-table widefat"><tr><th>Table name
+			<a href="#" class="show_debug">Show debug</a>
+			</th><th>Table name</th></tr>';
+
+		// looping through the tables
+		$tables = $this->_get_tables();
+		foreach($tables as $tbl) {
+			$normal = 0;
+			$serialized = 0;
+			$output = '';
+			$table = $tbl[0];
+			$fields = $this->_get_table_fields($table);
+			// looping through the fields in a table
+			foreach($fields as $field) {
+				// $field[0] contains the field name
+				$array = $this->_check_fields_in_table($table, $field[0], $from);
+				foreach ($array as $found) {
+					$output .= $field[0];
+					$value = maybe_unserialize($found[0]);
+					if (is_array($value)) { // means the data is serialized.
+//						echo '<pre>';
+//						print_r($found[0]);
+//						echo '</pre>';
+						//$value = json_encode($value);
+						//echo addcslashes($this->url_from,"/\"");
+						//$value = str_replace(addcslashes($this->url_from,"/\""), addcslashes($this->url_to,"/\""), $value);
+						$value = $this->recursive_replace($from, $to, $value);
+						//$value = str_replace($this->url_from, $this->url_to, $value);
+						//$value = json_decode($value);
+						$value = maybe_serialize($value);
+//						echo '<pre>';
+//						print_r($value);
+//						echo '</pre>';
+						$this->_update_value_in_field($table, $field[0], $found[0], $value);
+					} else {
+						$this->_update_value_in_field($table, $field[0], $from, $to);
+					}
+				}
+			}
+		}
+		return 'Running the fix';
+	}
+
+
+
 	function _get_options() {
 		
 	}
 
-	function _check_fields_in_table($table, $field) {
+	private function _check_fields_in_table($table, $field, $from)
+	{
 		global $wpdb;
-		$query = "SELECT `$field` FROM $table WHERE `$field` LIKE \"%$this->text_to_replace%\"";
+		$query = "SELECT `$field` FROM $table WHERE `$field` LIKE \"%$from%\"";
 		//echo $query;
 		$results = $wpdb->get_results($query, ARRAY_N);
 		return $results;
 	}
 
-	function _get_options_with_url() {
-		global $wpdb;
-		$query = "SELECT * FROM $wpdb->options WHERE option_value LIKE \"%$this->text_to_replace%\"";
-		$results = $wpdb->get_results($query, OBJECT);
-		return $results;
-	}
-
-	function _get_tables() {
+	private function _get_tables()
+	{
 		global $wpdb;
 		$query = "show tables";
 		$results = $wpdb->get_results($query, ARRAY_N);
 		return $results;
 	}
 
-	function _get_table_fields($table) {
+	private function _get_table_fields($table)
+	{
 		global $wpdb;
 		$query = "SHOW COLUMNS FROM `$table`";
 		//echo $query;
@@ -178,13 +266,49 @@ class DeployHelper
 		echo '</pre>';
 	}
 
+	private function _update_value_in_field($table, $field, $from, $to)
+	{
+		global $wpdb;
+		$query = "UPDATE $table
+				SET $field = REPLACE($field, '$from', '$to')
+				WHERE $field LIKE '%$from%'";
+		$wpdb->query($query);
+		//echo $query;
+	}
 
-	function _paint_url($url, $data){
+
+	function _paint_url($url, $data)
+	{
 		$data = str_replace($url, '<span style="color:red">'.$url.'</span>', $data);
 		return $data;
 	}
 
-	function my_action_javascript()
+
+	/**
+	 * Recursively goes through an array and replaces the string with the given values.
+	 *
+	 * It will detect numeric values and turn them into int so the re-serialization stays consistent.
+	 *
+	 * @param $from - to replace
+	 * @param $to - to replace with
+	 * @param $value - given value, could be an array or string.
+	 * @return array|int|mixed
+	 */
+	function recursive_replace($from, $to, $value)
+	{
+		if (is_array($value)) {
+			foreach ($value as $key => $elem) {
+				$value[$key] = $this->recursive_replace($from, $to, $elem);
+			}
+		} elseif (is_numeric($value)) {
+			$value = absint($value);
+		} else {
+			$value = str_replace($from, $to, $value);
+		}
+		return $value;
+	}
+
+/*	function my_action_javascript()
 	{
 		?>
 		<script type="text/javascript">
@@ -204,9 +328,7 @@ class DeployHelper
 			});
 		</script>
 	<?php
-	}
-
-
+	}*/
 
 }
 
