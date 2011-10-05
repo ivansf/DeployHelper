@@ -7,7 +7,13 @@
 
 span.green {
 	background: #3b943b;
+}
+span.red {
+	background: #9a2316;
+}
+span.red, span.green {
 	color: #FFF;
+	text-shadow: 0 -1px 0 #000;
 	line-height: 20px;
 	padding: 3px 10px;
 	border-radius: 3px;

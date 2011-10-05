@@ -25,6 +25,7 @@ class DeployHelper
 	function td_deploy_page()
 	{
 //		add_action('init', array(&$this, 'init_plugin'));
+		set_time_limit(120);
 		$deploy_helper_page = add_options_page('deploy_helper', 'Deploy Helper', 'manage_options', 'deploy_helper', array(&$this, 'deploy_helper_option_page'));
 		add_action('admin_print_styles-'.$deploy_helper_page, array(&$this, 'init_plugin'));
 		add_management_page( 'Custom Permalinks', 'Custom Permalinks', 5, __FILE__, 'custom_permalinks_options_page' );
@@ -56,16 +57,13 @@ class DeployHelper
 				<h3><span>Information</span></h3>
 
 				<div class="inside">
+<!--					<p class="description">The following is some useful information.</p>-->
 					<table class="wp-list-table widefat ">
 						<tr>
 							<th width="30%">Test</th>
 							<th width="70%">Status</th>
 						</tr>
-						<?php
-						$uploaddir = wp_upload_dir();
-						//$uploaddir = $uploaddir['basedir'];
-
-						?>
+						<?php $uploaddir = wp_upload_dir();	?>
 						<tr><td>Upload path:</td><td><strong><?php echo $uploaddir['basedir'] ?></strong></td></tr>
 						<tr><td>Upload path writtable:</td><td><?php echo is_writable($uploaddir['basedir'])? '<span class="green">Writtable</span>': '<span class="red">Not Writtable</span>'; ?></td></tr>
 						<tr><td>.htaccess exists:</td><td><?php echo file_exists(ABSPATH . '.htaccess')? '<span class="green">File Exists</span>': '<span class="red">Not found</span>'; ?></td></tr>
@@ -78,8 +76,16 @@ class DeployHelper
 			<div class="postbox">
 				<form method="post" action="">
 					<h3><span>Fix Paths</span></h3>
-
 				<div class="inside">
+					<p>
+						<?php //set_time_limit;?>
+
+
+						<?php if (ini_get('safe_mode') && (ini_get('max_execution_time') < 45)): ?>
+						<span class="red">Warning: You are running PHP in safe mode and the current execution time is
+							<?php echo ini_get('max_execution_time') ?> seconds. You may get timeouts when running a database fix on a large amount of posts.</span>
+						<?php endif; ?>
+					</p>
 					<p>
 						Deploy Helper helps with the tedious process of moving a site from one server to another. This is a common problem when
 							working on multiple environments such as developer, staging and production.
@@ -107,9 +113,6 @@ class DeployHelper
 							<p class="description">Paste in the server path the site is currently in.</p></td>
 						</tr>
 					</table>
-					<p class="description">The test will also check for write permissions on most common paths.</p>
-
-
 
 					<p><label><input type="checkbox" name="ignore" value="1" <?php if (@$_POST['ignore'] == 1) echo ' checked' ?>> Include server paths.</label></p>
 					<input type="submit" name="submit" class="button button-primary" value="Run check" />
