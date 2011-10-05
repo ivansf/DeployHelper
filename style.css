@@ -1,0 +1,14 @@
+#poststuff h2 {
+	background: url(images/logo42.png) no-repeat;
+	line-height: 42px;
+	font-size: 26px;
+	padding-left: 47px;
+}
+
+span.green {
+	background: #3b943b;
+	color: #FFF;
+	line-height: 20px;
+	padding: 3px 10px;
+	border-radius: 3px;
+}

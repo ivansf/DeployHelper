@@ -17,13 +17,16 @@ class DeployHelper
 
 	function DeployHelper()
 	{
-
 		add_action('admin_menu', array(&$this, 'td_deploy_page'));
+
+
 	}
 
 	function td_deploy_page()
 	{
-		add_options_page('deploy_helper', 'Deploy Helper', 'manage_options', 'deploy_helper', array(&$this, 'deploy_helper_option_page'));
+//		add_action('init', array(&$this, 'init_plugin'));
+		$deploy_helper_page = add_options_page('deploy_helper', 'Deploy Helper', 'manage_options', 'deploy_helper', array(&$this, 'deploy_helper_option_page'));
+		add_action('admin_print_styles-'.$deploy_helper_page, array(&$this, 'init_plugin'));
 		add_management_page( 'Custom Permalinks', 'Custom Permalinks', 5, __FILE__, 'custom_permalinks_options_page' );
 	}
 
@@ -32,6 +35,8 @@ class DeployHelper
 		if (!current_user_can('manage_options')) {
 			wp_die(__('You do not have sufficient permissions to access this page.'));
 		}
+		//wp_enqueue_script( 'my_awesome_script', '/script.js', array( 'jquery' ));
+
 		?>
 		<script type="text/javascript">
 			jQuery(document).ready(function($) {
@@ -41,12 +46,38 @@ class DeployHelper
 				});
 			});
 		</script>
+
+
+
 		<div id="poststuff" class="wrap metabox-holder">
-			<h2><a href="#" style="float:right;">Top Draw Logo</a>Deploy Helper</h2>
+			<h2>Deploy Helper</h2>
+
+			<div class="postbox">
+				<h3><span>Information</span></h3>
+
+				<div class="inside">
+					<table class="wp-list-table widefat ">
+						<tr>
+							<th width="30%">Test</th>
+							<th width="70%">Status</th>
+						</tr>
+						<?php
+						$uploaddir = wp_upload_dir();
+						//$uploaddir = $uploaddir['basedir'];
+
+						?>
+						<tr><td>Upload path:</td><td><strong><?php echo $uploaddir['basedir'] ?></strong></td></tr>
+						<tr><td>Upload path writtable:</td><td><?php echo is_writable($uploaddir['basedir'])? '<span class="green">Writtable</span>': '<span class="red">Not Writtable</span>'; ?></td></tr>
+						<tr><td>.htaccess exists:</td><td><?php echo file_exists(ABSPATH . '.htaccess')? '<span class="green">File Exists</span>': '<span class="red">Not found</span>'; ?></td></tr>
+						<tr><td>.htaccess writtable:</td><td><?php echo is_writable(ABSPATH . '.htaccess')? '<span class="green">Writtable</span>': '<span class="red">Not Writtable</span>'; ?></td></tr>
+					</table>
+				</div>
+			</div>
+
 
 			<div class="postbox">
 				<form method="post" action="">
-					<h3><span>Instructions</span></h3>
+					<h3><span>Fix Paths</span></h3>
 
 				<div class="inside">
 					<p>
@@ -85,7 +116,9 @@ class DeployHelper
 					<input type="submit" name="submit" class="button" value="Fix" />
 				</div>
 				</form>
+
 			</div>
+			Developer by <a href="http://www.topdraw.com/" title="Top Draw" target="_blank">Top Draw, Inc</a>
 
 		<?php
 
@@ -114,6 +147,10 @@ class DeployHelper
 	}
 
 
+	//
+	function init_plugin() {
+		wp_enqueue_style('td-style', WP_PLUGIN_URL . '/td-deployhelper/style.css');
+	}
 	/**
 	 * Runs a check to find the old server path and site url.
 	 *
