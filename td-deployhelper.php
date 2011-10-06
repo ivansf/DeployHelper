@@ -65,9 +65,9 @@ class DeployHelper
 						</tr>
 						<?php $uploaddir = wp_upload_dir();	?>
 						<tr><td>Upload path:</td><td><strong><?php echo $uploaddir['basedir'] ?></strong></td></tr>
-						<tr><td>Upload path writtable:</td><td><?php echo is_writable($uploaddir['basedir'])? '<span class="green">Writtable</span>': '<span class="red">Not Writtable</span>'; ?></td></tr>
+						<tr><td>Upload path writable:</td><td><?php echo is_writable($uploaddir['basedir'])? '<span class="green">Writable</span>': '<span class="red">Not writable</span>'; ?></td></tr>
 						<tr><td>.htaccess exists:</td><td><?php echo file_exists(ABSPATH . '.htaccess')? '<span class="green">File Exists</span>': '<span class="red">Not found</span>'; ?></td></tr>
-						<tr><td>.htaccess writtable:</td><td><?php echo is_writable(ABSPATH . '.htaccess')? '<span class="green">Writtable</span>': '<span class="red">Not Writtable</span>'; ?></td></tr>
+						<tr><td>.htaccess writable:</td><td><?php echo is_writable(ABSPATH . '.htaccess')? '<span class="green">Writable</span>': '<span class="red">Not writable</span>'; ?></td></tr>
 					</table>
 				</div>
 			</div>
@@ -121,7 +121,7 @@ class DeployHelper
 				</form>
 
 			</div>
-			Developer by <a href="http://www.topdraw.com/" title="Top Draw" target="_blank">Top Draw, Inc</a>
+			Developed by <a href="http://www.topdraw.com/" title="Top Draw" target="_blank">Top Draw, Inc</a>
 
 		<?php
 
