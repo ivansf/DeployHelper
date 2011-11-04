@@ -4,7 +4,7 @@ Donate link: http://www.topdraw.com/
 Tags: deployment, hosting, paths, development, staging
 Requires at least: 3.0.0
 Tested up to: 3.2.1
-Stable tag: 1
+Stable tag: 0.3
 
 == Description ==
 
@@ -32,6 +32,15 @@ Simplify the process of deploying a website. If you ever worked on a Wordpress s
 
 == Changelog ==
 
-= 1.0.0 =
+= 0.3 =
+
+- Issues with old naming
+
+= 0.2 =
+
+- Better debug info.
+- Styling issues.
+
+= 0.1 =
 
 - First version

@@ -18,3 +18,10 @@ span.red, span.green {
 	padding: 3px 10px;
 	border-radius: 3px;
 }
+
+#site-stats td {
+	height: 22px;
+}
+.credits {
+	margin-top: 15px;
+}

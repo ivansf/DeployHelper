@@ -3,7 +3,7 @@
 Plugin Name: Deploy Helper
 Plugin URI: http://www.topdraw.com
 Description: A simple deploy helper utility for moving sites from enviroments. <br/>Licensed under the <a href="http://www.fsf.org/licensing/licenses/gpl.txt">GPL</a>
-Version: 0.1
+Version: 0.3
 Author: Top Draw Inc.
 Author URI: http://www.topdraw.com
 */
@@ -58,7 +58,7 @@ class DeployHelper
 
 				<div class="inside">
 <!--					<p class="description">The following is some useful information.</p>-->
-					<table class="wp-list-table widefat ">
+					<table class="wp-list-table widefat" id="site-stats">
 						<tr>
 							<th width="30%">Test</th>
 							<th width="70%">Status</th>
@@ -115,14 +115,13 @@ class DeployHelper
 					</table>
 
 					<p><label><input type="checkbox" name="ignore" value="1" <?php if (@$_POST['ignore'] == 1) echo ' checked' ?>> Include server paths.</label></p>
+					<p><label><input type="checkbox" name="details" value="1" <?php if (@$_POST['details'] == 1) echo ' checked' ?>> Show detailed info.</label></p>
 					<input type="submit" name="submit" class="button button-primary" value="Run check" />
 					<input type="submit" name="submit" class="button" value="Fix" />
 				</div>
 				</form>
 
 			</div>
-			Developed by <a href="http://www.topdraw.com/" title="Top Draw" target="_blank">Top Draw, Inc</a>
-
 		<?php
 
 		if (isset($_POST['submit'])) {
@@ -145,6 +144,7 @@ class DeployHelper
 			}
 		}
 		?>
+			<div class="credits">Developed by <a href="http://www.topdraw.com/" title="Top Draw" target="_blank">Top Draw, Inc</a></div>
 		</div>
 		<?php
 	}
@@ -152,7 +152,7 @@ class DeployHelper
 
 	//
 	function init_plugin() {
-		wp_enqueue_style('td-style', WP_PLUGIN_URL . '/td-deployhelper/style.css');
+		wp_enqueue_style('td-style', WP_PLUGIN_URL . '/deploy-helper/style.css');
 	}
 	/**
 	 * Runs a check to find the old server path and site url.
@@ -169,9 +169,9 @@ class DeployHelper
 		}
 
 		$out = '';
-		$out .= '<table class="wp-list-table widefat"><tr><th>Table name
-			<a href="#" class="show_debug">Show debug</a>
-			</th><th>Table name</th></tr>';
+		$out .= '<table class="wp-list-table widefat"><tr><th>Table name'.
+				($_POST['details']?'<a href="#" class="show_debug button">Show Detailed Info</a>': ' ').
+			'</th><th>Table name</th></tr>';
 
 		$tables = $this->_get_tables();
 
@@ -193,20 +193,21 @@ class DeployHelper
 					if (is_array($value)) { // means the data is serialized.
 						$serialized++;
 						$found[0] = '<div style="border: 1px solid #BBB; padding: 3px; margin: 3px; overflow: auto;
-						max-height: 80px; width: 420px;">' . $this->_paint_url($from,print_r($value, true)) .  '</div>';
+						max-height: 80px; width: 400px;">' . $this->_paint_url($from,print_r($value, true)) .  '</div>';
 					} else {
 						$found[0] = '<div style="border: 1px solid #555; padding: 3px; margin: 3px; overflow: auto;
-						max-height: 80px; width: 420px">'.$found[0].'</div>';
+						max-height: 80px; width: 400px">'.$found[0].'</div>';
 						$normal++;
 					}
 					$output .= $found[0];
 				}
 			}
+
 			if ($normal > 0 OR $serialized > 0) {
 				$out .= '<tr><td><strong>' . $table . '</strong><br>';
-				$out .= '<div class="debug" style="display:none;">'. $output. '</div></td><td>';
-				$out .= 'In normal values: ' . $normal;
-				$out .= '<br>In serialized data: ' . $serialized;
+				$out .= '<div class="debug" style="display:none;">'. ($_POST['details']?$output : ' '). '</div></td><td>';
+				$out .= '<strong>In normal values: </strong>' . $normal;
+				$out .= '<br><strong>In serialized data: </strong>' . $serialized;
 				$out .= '</td></tr>';
 			}
 		}
@@ -226,17 +227,16 @@ class DeployHelper
 			$from = $this->path_from;
 			$to = $this->path_to;
 		}
+		$normal = 0;
+		$serialized = 0;
 		$out = '';
 //		$results = $this->_get_options_with_url();
-		$out .= '<table class="wp-list-table widefat"><tr><th>Table name
-			<a href="#" class="show_debug">Show debug</a>
+		$out .= '<table class="wp-list-table widefat"><tr><th>Results
 			</th><th>Table name</th></tr>';
 
 		// looping through the tables
 		$tables = $this->_get_tables();
 		foreach($tables as $tbl) {
-			$normal = 0;
-			$serialized = 0;
 			$output = '';
 			$table = $tbl[0];
 			$fields = $this->_get_table_fields($table);
@@ -248,27 +248,21 @@ class DeployHelper
 					$output .= $field[0];
 					$value = maybe_unserialize($found[0]);
 					if (is_array($value)) { // means the data is serialized.
-//						echo '<pre>';
-//						print_r($found[0]);
-//						echo '</pre>';
-						//$value = json_encode($value);
-						//echo addcslashes($this->url_from,"/\"");
-						//$value = str_replace(addcslashes($this->url_from,"/\""), addcslashes($this->url_to,"/\""), $value);
 						$value = $this->recursive_replace($from, $to, $value);
-						//$value = str_replace($this->url_from, $this->url_to, $value);
-						//$value = json_decode($value);
 						$value = maybe_serialize($value);
-//						echo '<pre>';
-//						print_r($value);
-//						echo '</pre>';
 						$this->_update_value_in_field($table, $field[0], $found[0], $value);
+						$serialized++;
+
 					} else {
 						$this->_update_value_in_field($table, $field[0], $from, $to);
+						$normal++;
 					}
 				}
 			}
 		}
-		return 'Running the fix';
+		$out .= '<tr><td>Normal values replaced: </td><td>'.$normal.'</td></tr>';
+		$out .= '<tr><td>Serialized values replaced: </td><td>'.$serialized.'</td></tr>';
+		return $out;
 	}
 
 
