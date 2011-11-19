@@ -146,7 +146,9 @@ class DeployHelper
 		?>
 			<div class="credits">Developed by <a href="http://www.topdraw.com/" title="Top Draw" target="_blank">Top Draw, Inc</a></div>
 		</div>
-		<?php
+	<?php
+		//echo is_serialized('a:4:{s:25:"dashboard_recent_comments";a:1:{s:5:"items";i:5;}s:24:"dashboard_incoming_links";a:5:{s:4:"home";s:19:"http://wptest.local";s:4:"link";s:95:"http://blogsearch.google.com/blogsearch?scoring=d&partner=wordpress&q=link:http://wptest.local/";s:3:"url";s:128:"http://blogsearch.google.com/blogsearch_feeds?scoring=d&ie=utf-8&num=10&output=rss&partner=wordpress&q=link:http://wasdas123123/";s:5:"items";i:10;s:9:"show_date";s:0:"";}s:17:"dashboard_primary";a:7:{s:4:"link";s:26:"http://wordpress.org/news/";s:3:"url";s:31:"http://wordpress.org/news/feed/";s:5:"title";s:14:"WordPress Blog";s:5:"items";i:2;s:12:"show_summary";i:1;s:11:"show_author";i:0;s:9:"show_date";i:1;}s:19:"dashboard_secondary";a:7:{s:4:"link";s:28:"http://planet.wordpress.org/";s:3:"url";s:33:"http://planet.wordpress.org/feed/";s:5:"title";s:20:"Other WordPress News";s:5:"items";i:5;s:12:"show_summary";i:0;s:11:"show_author";i:0;s:9:"show_date";i:0;}}');
+
 	}
 
 
@@ -190,7 +192,7 @@ class DeployHelper
 				foreach ($array as $found) {
 					$output .= $field[0];
 					$value = maybe_unserialize($found[0]);
-					if (is_array($value)) { // means the data is serialized.
+					if (is_serialized($found[0])) { // means the data is serialized.
 						$serialized++;
 						$found[0] = '<div style="border: 1px solid #BBB; padding: 3px; margin: 3px; overflow: auto;
 						max-height: 80px; width: 400px;">' . $this->_paint_url($from,print_r($value, true)) .  '</div>';
@@ -246,8 +248,10 @@ class DeployHelper
 				$array = $this->_check_fields_in_table($table, $field[0], $from);
 				foreach ($array as $found) {
 					$output .= $field[0];
+
 					$value = maybe_unserialize($found[0]);
-					if (is_array($value)) { // means the data is serialized.
+
+					if (is_serialized($found[0])) { // means the data is serialized.
 						$value = $this->recursive_replace($from, $to, $value);
 						$value = maybe_serialize($value);
 						$this->_update_value_in_field($table, $field[0], $found[0], $value);
