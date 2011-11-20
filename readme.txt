@@ -2,9 +2,9 @@
 Contributors: topdrawinc
 Donate link: http://www.topdraw.com/
 Tags: deployment, hosting, paths, development, staging
-Requires at least: 3.0.0
-Tested up to: 3.2.1
-Stable tag: 0.3
+Requires at least: 2.9.0
+Tested up to: 3.3
+Stable tag: 0.4
 
 == Description ==
 
