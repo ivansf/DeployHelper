@@ -32,6 +32,12 @@ Simplify the process of deploying a website. If you ever worked on a Wordpress s
 
 == Changelog ==
 
+= 0.4 =
+
+- Fixed an error when checking for serialized data.
+- UI improvements
+- Plugin folder name is not irrelevant. (in case you clone from git).
+
 = 0.3 =
 
 - Issues with old naming
