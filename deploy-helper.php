@@ -14,17 +14,16 @@ class DeployHelper
 	private $url_to = '';
 	private $path_from = '';
 	private $path_to = '';
+	private $path = '';
 
 	function DeployHelper()
 	{
 		add_action('admin_menu', array(&$this, 'td_deploy_page'));
-
-
+		$this->path = WP_PLUGIN_URL . '/' . str_replace(basename(__FILE__), "", plugin_basename(__FILE__));
 	}
 
 	function td_deploy_page()
 	{
-//		add_action('init', array(&$this, 'init_plugin'));
 		set_time_limit(120);
 		$deploy_helper_page = add_options_page('deploy_helper', 'Deploy Helper', 'manage_options', 'deploy_helper', array(&$this, 'deploy_helper_option_page'));
 		add_action('admin_print_styles-'.$deploy_helper_page, array(&$this, 'init_plugin'));
@@ -41,8 +40,11 @@ class DeployHelper
 		?>
 		<script type="text/javascript">
 			jQuery(document).ready(function($) {
-				jQuery('.show_debug').click(function(){
+				jQuery('.show_debug').toggle(function(){
 					jQuery('.debug').show();
+					return false;
+				}, function(){
+					jQuery('.debug').hide();
 					return false;
 				});
 			});
@@ -75,20 +77,21 @@ class DeployHelper
 
 			<div class="postbox">
 				<form method="post" action="">
-					<h3><span>Fix Paths</span></h3>
+					<h3><span>Fix paths and URLs</span></h3>
 				<div class="inside">
 					<p>
-						<?php //set_time_limit;?>
-
-
 						<?php if (ini_get('safe_mode') && (ini_get('max_execution_time') < 45)): ?>
 						<span class="red">Warning: You are running PHP in safe mode and the current execution time is
 							<?php echo ini_get('max_execution_time') ?> seconds. You may get timeouts when running a database fix on a large amount of posts.</span>
 						<?php endif; ?>
 					</p>
 					<p>
-						Deploy Helper helps with the tedious process of moving a site from one server to another. This is a common problem when
-							working on multiple environments such as developer, staging and production.
+						You can fix previous environment paths and urls by using this tool. Running a check first will give you a quick
+						report before you run a full database fix.
+					</p>
+
+					<p>
+						<strong>Warning</strong>: It is strongly recommended to make a database backup before using this tool.
 					</p>
 					<table class="wp-list-table widefat ">
 						<tr>
@@ -131,6 +134,8 @@ class DeployHelper
 			$this->path_to = $_POST['path_to'];
 		}
 		if (isset($_POST['submit']) && $_POST['submit'] === 'Run check') {
+			echo $_POST['details'] ? '<div class="debug_top">'.
+				'<a href="#" class="show_debug button" style="margin-left: 10px;">Show Detailed Info</a></div>' : ' ';
 			echo $this->run_check();
 			if (isset($_POST['ignore']) && ($_POST['ignore'] == 1)) {
 				echo '<hr >';
@@ -151,11 +156,15 @@ class DeployHelper
 
 	}
 
-
-	//
+	/**
+	 * Initializes the plugin.
+	 * 
+	 * @return void
+	 */
 	function init_plugin() {
-		wp_enqueue_style('td-style', WP_PLUGIN_URL . '/deploy-helper/style.css');
+		wp_enqueue_style('td-style', $this->path . 'style.css');
 	}
+
 	/**
 	 * Runs a check to find the old server path and site url.
 	 *
@@ -165,15 +174,16 @@ class DeployHelper
 	{
 		$from = $this->url_from;
 		$to = $this->url_to;
+		$name = 'URL Results';
 		if ($path) {
 			$from = $this->path_from;
 			$to = $this->path_to;
+			$name = 'Path Results';
 		}
 
+
 		$out = '';
-		$out .= '<table class="wp-list-table widefat"><tr><th>Table name'.
-				($_POST['details']?'<a href="#" class="show_debug button">Show Detailed Info</a>': ' ').
-			'</th><th>Table name</th></tr>';
+		$out .= '<table id="results-table" class="wp-list-table widefat"><tr><th>'. $name .	'</th></tr>';
 
 		$tables = $this->_get_tables();
 
@@ -187,18 +197,18 @@ class DeployHelper
 
 			// looping through the fields in a table
 			foreach($fields as $field) {
-				// $field[0] contains the field name
+				// $field[0] contains the field name    - $fields[0][0] contains the first column name from that table.
 				$array = $this->_check_fields_in_table($table, $field[0], $from);
 				foreach ($array as $found) {
-					$output .= $field[0];
 					$value = maybe_unserialize($found[0]);
 					if (is_serialized($found[0])) { // means the data is serialized.
 						$serialized++;
-						$found[0] = '<div style="border: 1px solid #BBB; padding: 3px; margin: 3px; overflow: auto;
-						max-height: 80px; width: 400px;">' . $this->_paint_url($from,print_r($value, true)) .  '</div>';
+						$output .= '<div class="serialized_label">' . $field[0] . '</div>'; //  .
+						$found[0] = '<div class="serialized_debug">' .
+									$this->_paint_url($from,print_r($value, true)) .  '</div>';
 					} else {
-						$found[0] = '<div style="border: 1px solid #555; padding: 3px; margin: 3px; overflow: auto;
-						max-height: 80px; width: 400px">'.$found[0].'</div>';
+						$output .= '<div class="normal_label">' . $field[0] . '</div>'; //  .
+						$found[0] = '<div class="normal_debug">'. htmlentities($found[0]).'</div>';
 						$normal++;
 					}
 					$output .= $found[0];
@@ -206,20 +216,23 @@ class DeployHelper
 			}
 
 			if ($normal > 0 OR $serialized > 0) {
-				$out .= '<tr><td><strong>' . $table . '</strong><br>';
-				$out .= '<div class="debug" style="display:none;">'. ($_POST['details']?$output : ' '). '</div></td><td>';
-				$out .= '<strong>In normal values: </strong>' . $normal;
-				$out .= '<br><strong>In serialized data: </strong>' . $serialized;
+				$out .= '<tr><td><h3>' . $table . '</h3>';
+				$out .= '<strong class="normal">In normal values: </strong>' . $normal;
+				$out .= '<br><strong class="serialized">In serialized data: </strong>' . $serialized;
 				$out .= '</td></tr>';
+				$out .= '<tr><td><div class="debug" style="display:none;">' . ($_POST['details'] ? $output : ' ') . '</div></td></tr>';
 			}
 		}
 		$out .= '</table>';
 		return $out;
 	}
 
-
 	/**
-	 * @return HTML with results
+	 * Same as run_check() but it will attempt to fix urls
+	 * and paths (if checked).
+	 *
+	 * @param bool $path
+	 * @return string
 	 */
 	function run_fix($path = false)
 	{
@@ -250,13 +263,11 @@ class DeployHelper
 					$output .= $field[0];
 
 					$value = maybe_unserialize($found[0]);
-
 					if (is_serialized($found[0])) { // means the data is serialized.
 						$value = $this->recursive_replace($from, $to, $value);
 						$value = maybe_serialize($value);
 						$this->_update_value_in_field($table, $field[0], $found[0], $value);
 						$serialized++;
-
 					} else {
 						$this->_update_value_in_field($table, $field[0], $from, $to);
 						$normal++;
@@ -268,8 +279,6 @@ class DeployHelper
 		$out .= '<tr><td>Serialized values replaced: </td><td>'.$serialized.'</td></tr>';
 		return $out;
 	}
-
-
 
 	function _get_options() {
 		
