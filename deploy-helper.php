@@ -1,9 +1,9 @@
 <?php
 /*
 Plugin Name: Deploy Helper
-Plugin URI: http://www.topdraw.com
+Plugin URI: http://www.topdraw.com/news/wp-plugin-deploy-helper/
 Description: A simple deploy helper utility for moving sites from enviroments. <br/>Licensed under the <a href="http://www.fsf.org/licensing/licenses/gpl.txt">GPL</a>
-Version: 0.3
+Version: 0.4
 Author: Top Draw Inc.
 Author URI: http://www.topdraw.com
 */

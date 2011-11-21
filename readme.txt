@@ -10,7 +10,7 @@ Stable tag: 0.4
 
 Simplify the process of deploying a website. If you ever worked on a Wordpress site on a local environment, you know how frustrating it can be to move it to different servers.
 
-<strong>[Plugin home page](http://www.topdraw.com/ "Top Draw home page")</strong>
+<strong>[Plugin home page](http://www.topdraw.com/news/wp-plugin-deploy-helper/ "Top Draw home page")</strong>
 
 <strong>[Forum / Support](http://wordpress.org/tags/td-deployhelper/ "Forum / Support")</strong>
 
