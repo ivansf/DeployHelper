@@ -4,7 +4,7 @@ Donate link: http://www.topdraw.com/
 Tags: deployment, hosting, paths, development, staging
 Requires at least: 2.9.0
 Tested up to: 3.3
-Stable tag: 0.4
+Stable tag: 0.5
 
 == Description ==
 
@@ -22,7 +22,9 @@ Simplify the process of deploying a website. If you ever worked on a Wordpress s
 
 == Frequently Asked Questions ==
 
-= Have a feature request? =
+= Some values are not being fixed when I click fix. =
+
+- This is a known issue with some encoded fields in the database. I'm looking into this.
 
 [Forum / Support](http://wordpress.org/tags/td-deployhelper/ "Forum / Support")
 
@@ -31,6 +33,11 @@ Simplify the process of deploying a website. If you ever worked on a Wordpress s
 1. Deploy Helper Screenshots
 
 == Changelog ==
+
+= 0.5 =
+
+- Some string values were not being updated in serialized data.
+- Crash with some serialized data.
 
 = 0.4 =
 

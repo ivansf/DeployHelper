@@ -3,7 +3,7 @@
 Plugin Name: Deploy Helper
 Plugin URI: http://www.topdraw.com/news/wp-plugin-deploy-helper/
 Description: A simple deploy helper utility for moving sites from enviroments. <br/>Licensed under the <a href="http://www.fsf.org/licensing/licenses/gpl.txt">GPL</a>
-Version: 0.4
+Version: 0.5
 Author: Top Draw Inc.
 Author URI: http://www.topdraw.com
 */
@@ -20,6 +20,8 @@ class DeployHelper
 	{
 		add_action('admin_menu', array(&$this, 'td_deploy_page'));
 		$this->path = WP_PLUGIN_URL . '/' . str_replace(basename(__FILE__), "", plugin_basename(__FILE__));
+
+		//ini_set('unserialize_callback_func', );
 	}
 
 	function td_deploy_page()
@@ -218,7 +220,7 @@ class DeployHelper
 				$out .= '<strong class="normal">In normal values: </strong>' . $normal;
 				$out .= '<br><strong class="serialized">In serialized data: </strong>' . $serialized;
 				$out .= '</td></tr>';
-				$out .= '<tr><td><div class="debug" style="display:none;">' . ($_POST['details'] ? $output : ' ') . '</div></td></tr>';
+				$out .= '<tr><td><div class="debug">' . ($_POST['details'] ? $output : ' ') . '</div></td></tr>';
 			}
 		}
 		$out .= '</table>';
@@ -314,11 +316,14 @@ class DeployHelper
 	private function _update_value_in_field($table, $field, $from, $to)
 	{
 		global $wpdb;
-		$query = "UPDATE $table
-				SET $field = REPLACE($field, '$from', '$to')
-				WHERE $field LIKE '%$from%'";
-		$wpdb->query($query);
-		//echo $query;
+		if (is_string($to)) {
+			//echo $table . $field . $from;
+			$query = "UPDATE $table
+					SET $field = REPLACE($field, '$from', '$to')
+					WHERE $field LIKE '%$from%'";
+			//$query = "SELECT * from $table WHERE $field LIKE '%$from%'";
+			return count($wpdb->get_results($query, ARRAY_N));
+		}
 	}
 
 
@@ -347,33 +352,11 @@ class DeployHelper
 			}
 		} elseif (is_numeric($value)) {
 			$value = absint($value);
-		} else {
+		} elseif (is_string($value)) {
 			$value = str_replace($from, $to, $value);
 		}
 		return $value;
 	}
-
-/*	function my_action_javascript()
-	{
-		?>
-		<script type="text/javascript">
-			jQuery(document).ready(function($) {
-				var data = {
-					action: 'my_action',
-					whatever: 1234
-				};
-				// since 2.8 ajaxurl is always defined in the admin header and points to admin-ajax.php
-				jQuery.post(ajaxurl, data, function(response) {
-					alert('Got this from the server: ' + response);
-				});
-
-				jQuery('#show_debug').click(function(){
-					jQuery('.debug').show();
-				});
-			});
-		</script>
-	<?php
-	}*/
 
 }
 
