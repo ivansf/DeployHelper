@@ -1,8 +1,10 @@
-#poststuff h2 {
+.deploy-helper-wrap h2 {
 	background: url(images/logo42.png) no-repeat;
-	line-height: 42px;
+	line-height: 37px;
 	font-size: 26px;
 	padding-left: 47px;
+	padding-top: 3px;
+	margin-top: 15px;
 }
 
 span.green {
@@ -72,6 +74,7 @@ span.red, span.green {
 #site-stats td {
 	height: 22px;
 }
-.credits {
+.deploy-helper-wrap .credits {
+	clear: both;
 	margin-top: 15px;
 }

@@ -4,7 +4,7 @@ Donate link: http://www.topdraw.com/
 Tags: deployment, hosting, paths, development, staging
 Requires at least: 2.9.0
 Tested up to: 3.3
-Stable tag: 0.5
+Stable tag: 0.6
 
 == Description ==
 
@@ -33,6 +33,11 @@ Simplify the process of deploying a website. If you ever worked on a Wordpress s
 1. Deploy Helper Screenshots
 
 == Changelog ==
+
+= 0.6 =
+
+- More information to the table
+- Fix Upload path by removing the old value.
 
 = 0.5 =
 

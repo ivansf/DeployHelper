@@ -3,7 +3,7 @@
 Plugin Name: Deploy Helper
 Plugin URI: http://www.topdraw.com/news/wp-plugin-deploy-helper/
 Description: A simple deploy helper utility for moving sites from enviroments. <br/>Licensed under the <a href="http://www.fsf.org/licensing/licenses/gpl.txt">GPL</a>
-Version: 0.5
+Version: 0.6
 Author: Top Draw Inc.
 Author URI: http://www.topdraw.com
 */
@@ -28,6 +28,7 @@ class DeployHelper
 	{
 		set_time_limit(120);
 		$deploy_helper_page = add_options_page('deploy_helper', 'Deploy Helper', 'manage_options', 'deploy_helper', array(&$this, 'deploy_helper_option_page'));
+		$deploy_helper_page_upload = add_options_page('deploy_helper', 'Deploy Helper Upload Fix', 'manage_options', 'deploy_helper_upload_clean', array(&$this, 'deploy_helper_upload_clean'));
 		add_action('admin_print_styles-'.$deploy_helper_page, array(&$this, 'init_plugin'));
 		add_management_page( 'Custom Permalinks', 'Custom Permalinks', 5, __FILE__, 'custom_permalinks_options_page' );
 	}
@@ -52,81 +53,139 @@ class DeployHelper
 			});
 		</script>
 
+		<div class="wrap deploy-helper-wrap">
+		<h2>Deploy Helper</h2>
+		<div id="dashboard-widgets" class="wrap metabox-holder">
+			
+
+			<div class="postbox-container" style="width: 75%;">
+				<div class="meta-box-sortables ui-sortable">
+					<div class="postbox">
+						<h3><span>Information</span></h3>
+						<div class="inside">
+		<!--					<p class="description">The following is some useful information.</p>-->
+							<table class="wp-list-table widefat" id="site-stats">
+								<tr>
+									<th width="30%">Test</th>
+									<th width="40%">Status</th>
+									<th width="30%">Operation</th>
+								</tr>
+								<tr>
+									<td>Absolute Path (ABSPATH):</td>
+									<td><?php echo ABSPATH; ?></td>
+									<td></td>
+								</tr>
+								<?php $uploaddir = wp_upload_dir();	?>
+								<tr>
+									<td>Upload path:</td>
+									<td><?php echo $uploaddir['basedir'] ?></td>
+									<td><?php if (empty($uploaddir['basedir'])) { 
+										echo 'Path not found. <a href="' . get_option('siteurl') . '/wp-admin/options-general.php?page=deploy_helper_upload_clean' .'" class="button">Fix Path</a>'; 
+									} ?></td>
+								</tr>
+								<tr>
+									<td>Upload path writable:</td>
+									<td><?php echo is_writable($uploaddir['basedir'])? '<span class="green">Writable</span>': '<span class="red">Not writable</span>'; ?></td>
+									<td></td>
+								</tr>
+								<tr>
+									<td>.htaccess exists:</td>
+									<td><?php echo file_exists(ABSPATH . '.htaccess')? '<span class="green">File Exists</span>': '<span class="red">Not found</span>'; ?></td>
+									<td></td>
+								</tr>
+								<tr>
+									<td>.htaccess writable:</td>
+									<td><?php echo is_writable(ABSPATH . '.htaccess')? '<span class="green">Writable</span>': '<span class="red">Not writable</span>'; ?></td>
+									<td></td>
+								</tr>
+								<tr>
+									<td>Robots.txt exists:</td>
+									<td><?php echo file_exists(ABSPATH . 'robots.txt')? '<span class="green">File Exists</span>': '<span class="red">Not found</span>'; ?></td>
+									<td></td>
+								</tr>
+								<tr>
+									<td>Sitemap XML exists:</td>
+									<td><?php echo file_exists(ABSPATH . 'sitemap.xml')? '<span class="green">File Exists</span>': '<span class="red">Not found</span>'; ?></td>
+									<td></td>
+								</tr>
+							</table>
+						</div>
+					</div>
+
+					<div class="postbox">
+						<form method="post" action="">
+							<h3><span>Fix paths and URLs</span></h3>
+						<div class="inside">
+							<p>
+								<?php if (ini_get('safe_mode') && (ini_get('max_execution_time') < 45)): ?>
+								<span class="red">Warning: You are running PHP in safe mode and the current execution time is
+									<?php echo ini_get('max_execution_time') ?> seconds. You may get timeouts when running a database fix on a large amount of posts.</span>
+								<?php endif; ?>
+							</p>
+							<p>
+								You can fix previous environment paths and urls by using this tool. Running a check first will give you a quick
+								report before you run a full database fix.
+							</p>
+
+							<p>
+								<strong>Warning</strong>: It is strongly recommended to make a database backup before using this tool.
+							</p>
+							<table class="wp-list-table widefat ">
+								<tr>
+									<th width="10%">Option</th>
+									<th width="40%">From</th><th width="40%">To</th>
+								</tr>
+								<tr>
+									<td><label>siteurl: </label></td>
+									<td><input type="text" name="url_from" style="width: 100%;"
+											   value="<?php echo @$_POST['url_from'] ? @$_POST['url_from'] : '<replace>' ?>" /></td>
+									<td><input type="text" name="url_to" style="width: 100%;"
+											   value="<?php echo @$_POST['url_to'] ? @$_POST['url_to'] : get_option('siteurl') ?>" />
+									</td>
+								</tr>
+								<tr>
+									<td><label>Server Path: </label></td>
+									<td><input type="text" name="path_from" style="width: 100%;"
+											value="<?php echo @$_POST['path_from'] ? @$_POST['path_from'] : '/var/...' ?>"/>
+									<p class="description">Paste in the server path where the site previously was.</p></td>
+									<td><input type="text" name="path_to" style="width: 100%;"
+											value="<?php echo @$_POST['path_to'] ? @$_POST['path_to'] : '/var/...' ?>"/>
+									<p class="description">Paste in the server path the site is currently in. Refer to ABSPATH.</p></td>
+								</tr>
+							</table>
+
+							<p><label><input type="checkbox" name="ignore" value="1" <?php if (@$_POST['ignore'] == 1) echo ' checked' ?>> Include server paths.</label></p>
+							<p><label><input type="checkbox" name="details" value="1" <?php if (@$_POST['details'] == 1) echo ' checked' ?>> Show detailed info.</label></p>
+							<input type="submit" name="submit" class="button button-primary" value="Run check" />
+							<input type="submit" name="submit" class="button" value="Fix" />
+						</div>
+						</form>
+
+					</div>
+				</div> 
 
 
-		<div id="poststuff" class="wrap metabox-holder">
-			<h2>Deploy Helper</h2>
+			</div>
+			<div class="postbox-container" style="width: 24%;">
+				<div class="postbox">
+					<h3><span>Help</span></h3>
+					<div class="inside">
+						<p>The first information table shows the most important elements you should check after moving a site.</p>
 
-			<div class="postbox">
-				<h3><span>Information</span></h3>
+						<p><strong>Paths and Site URL</strong></p>
+						<p>The second block is a tool for fixing paths in the database. After moving a site to a new location, the server path or site url may change and this tool
+						will help you scan the database for the old path ('From' field) and fix it using the new one ('To' field).</p>
 
-				<div class="inside">
-<!--					<p class="description">The following is some useful information.</p>-->
-					<table class="wp-list-table widefat" id="site-stats">
-						<tr>
-							<th width="30%">Test</th>
-							<th width="70%">Status</th>
-						</tr>
-						<?php $uploaddir = wp_upload_dir();	?>
-						<tr><td>Upload path:</td><td><strong><?php echo $uploaddir['basedir'] ?></strong></td></tr>
-						<tr><td>Upload path writable:</td><td><?php echo is_writable($uploaddir['basedir'])? '<span class="green">Writable</span>': '<span class="red">Not writable</span>'; ?></td></tr>
-						<tr><td>.htaccess exists:</td><td><?php echo file_exists(ABSPATH . '.htaccess')? '<span class="green">File Exists</span>': '<span class="red">Not found</span>'; ?></td></tr>
-						<tr><td>.htaccess writable:</td><td><?php echo is_writable(ABSPATH . '.htaccess')? '<span class="green">Writable</span>': '<span class="red">Not writable</span>'; ?></td></tr>
-					</table>
+						<p>"Show detailed info" will show the tables and fields found, as well as highlight the string if it's found in a serialized value.</p>
+
+						<p>Note: This tool will go over serialized fields and modify them properly.</p>
+
+						<p><em>We strongly suggest to back up your database before using this tool.</em></p>
+ 					</div>
 				</div>
 			</div>
 
-
-			<div class="postbox">
-				<form method="post" action="">
-					<h3><span>Fix paths and URLs</span></h3>
-				<div class="inside">
-					<p>
-						<?php if (ini_get('safe_mode') && (ini_get('max_execution_time') < 45)): ?>
-						<span class="red">Warning: You are running PHP in safe mode and the current execution time is
-							<?php echo ini_get('max_execution_time') ?> seconds. You may get timeouts when running a database fix on a large amount of posts.</span>
-						<?php endif; ?>
-					</p>
-					<p>
-						You can fix previous environment paths and urls by using this tool. Running a check first will give you a quick
-						report before you run a full database fix.
-					</p>
-
-					<p>
-						<strong>Warning</strong>: It is strongly recommended to make a database backup before using this tool.
-					</p>
-					<table class="wp-list-table widefat ">
-						<tr>
-							<th width="10%">Option</th>
-							<th width="40%">From</th><th width="40%">To</th>
-						</tr>
-						<tr>
-							<td><label>siteurl: </label></td>
-							<td><input type="text" name="url_from" style="width: 100%;"
-									   value="<?php echo @$_POST['url_from'] ? @$_POST['url_from'] : '<replace>' ?>" /></td>
-							<td><input type="text" name="url_to" style="width: 100%;"
-									   value="<?php echo @$_POST['url_to'] ? @$_POST['url_to'] : get_option('siteurl') ?>" />
-							</td>
-						</tr>
-						<tr>
-							<td><label>Server Path: </label></td>
-							<td><input type="text" name="path_from" style="width: 100%;"
-									value="<?php echo @$_POST['path_from'] ? @$_POST['path_from'] : '/var/...' ?>"/>
-							<p class="description">Paste in the server path where the site previously was. You may have to check the options table.</p></td>
-							<td><input type="text" name="path_to" style="width: 100%;"
-									value="<?php echo @$_POST['path_to'] ? @$_POST['path_to'] : '/var/...' ?>"/>
-							<p class="description">Paste in the server path the site is currently in.</p></td>
-						</tr>
-					</table>
-
-					<p><label><input type="checkbox" name="ignore" value="1" <?php if (@$_POST['ignore'] == 1) echo ' checked' ?>> Include server paths.</label></p>
-					<p><label><input type="checkbox" name="details" value="1" <?php if (@$_POST['details'] == 1) echo ' checked' ?>> Show detailed info.</label></p>
-					<input type="submit" name="submit" class="button button-primary" value="Run check" />
-					<input type="submit" name="submit" class="button" value="Fix" />
-				</div>
-				</form>
-
-			</div>
+		<div style="clear: both;">
 		<?php
 
 		if (isset($_POST['submit'])) {
@@ -151,10 +210,18 @@ class DeployHelper
 			}
 		}
 		?>
+		</div>
 			<div class="credits">Developed by <a href="http://www.topdraw.com/" title="Top Draw" target="_blank">Top Draw, Inc</a></div>
 		</div>
+	</div> <!-- /wrap -->
 	<?php
 	}
+
+	function deploy_helper_upload_clean() {
+		update_option('upload_path', '');
+		wp_redirect( get_option('siteurl') . '/wp-admin/options-general.php?page=deploy_helper');
+	}
+
 
 	/**
 	 * Initializes the plugin.
